@@ -62,12 +62,12 @@ def save_image(image):
     path = os.path.dirname(filePath)
 
     try:
-        os.mkdir(path + "/tex")
+        os.mkdir(f"{path}/tex")
     except FileExistsError:
         pass
 
     try:
-        os.mkdir(path + "/tex/" + str(image.size[0]))
+        os.mkdir(f"{path}/tex/{str(image.size[0])}")
     except FileExistsError:
         pass
 
@@ -75,12 +75,11 @@ def save_image(image):
         file_ending = ".jpg"
     elif image.file_format == "PNG" :
         file_ending = ".png"
-    
-    savepath = path + "/tex/" + \
-        str(image.size[0]) + "/" + image.name + file_ending
+
+    savepath = f"{path}/tex/{str(image.size[0])}/{image.name}{file_ending}"
 
     image.filepath_raw = savepath
-    
+
     image.save()
 
 def get_file_size(filepath):
@@ -91,8 +90,8 @@ def get_file_size(filepath):
         size /= 1024
     except:
         if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-            print("error getting file path for " + filepath)
-        
+            print(f"error getting file path for {filepath}")
+
     return (size)
 
 
@@ -139,7 +138,7 @@ def clean_empty_materials(self):
             mat = slot.material
             if mat is None:
                 if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                    print("Removed Empty Materials from " + obj.name)
+                    print(f"Removed Empty Materials from {obj.name}")
                 bpy.ops.object.select_all(action='DESELECT')
                 obj.select_set(True)
                 bpy.ops.object.material_slot_remove()
@@ -152,12 +151,16 @@ def get_pbr_inputs(pbr_node):
     roughness_input = pbr_node.inputs["Roughness"]
     normal_input = pbr_node.inputs["Normal"]
 
-    pbr_inputs = {"base_color_input":base_color_input, "metallic_input":metallic_input,"specular_input":specular_input,"roughness_input":roughness_input,"normal_input":normal_input}
-    return pbr_inputs    
+    return {
+        "base_color_input": base_color_input,
+        "metallic_input": metallic_input,
+        "specular_input": specular_input,
+        "roughness_input": roughness_input,
+        "normal_input": normal_input,
+    }    
 
 def find_node_by_type(nodes, node_type):
-    nodes_found = [n for n in nodes if n.type == node_type]
-    return nodes_found
+    return [n for n in nodes if n.type == node_type]
 
 def find_node_by_type_recusivly(material, note_to_start, node_type, del_nodes_inbetween=False):
     nodes = material.node_tree.nodes
@@ -315,7 +318,7 @@ def lightmap_to_ao(material,lightmap_node):
 def gen_safe_name():
     genId = uuid.uuid4().hex
     # genId = "u_" + genId.replace("-","_")
-    return "u_" + genId
+    return f"u_{genId}"
 
 def Unwrap_Lightmap_Group_Xatlas_2_headless_call(obj):
 

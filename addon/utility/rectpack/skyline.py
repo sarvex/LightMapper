@@ -136,18 +136,18 @@ class Skyline(PackingAlgorithm):
             seg (Rectangle):
         """
         skylineq = collections.deque([]) # Skyline after adding new one
-        
+
         for sky in self._skyline:
             if sky.right <= rect.left or sky.left >= rect.right:
                 self._merge_skyline(skylineq, sky)
                 continue
 
-            if sky.left < rect.left and sky.right > rect.left:
+            if sky.left < rect.left:
                 # Skyline section partially under segment left
                 self._merge_skyline(skylineq, 
                         HSegment(sky.start, rect.left-sky.left))
                 sky = HSegment(P(rect.left, sky.top), sky.right-rect.left)
-            
+
             if sky.left < rect.right:
                 if sky.left == rect.left:
                     self._merge_skyline(skylineq, 
@@ -157,7 +157,7 @@ class Skyline(PackingAlgorithm):
                     self._merge_skyline(skylineq, 
                         HSegment(P(rect.right, sky.top), sky.right-rect.right))
                     sky = HSegment(sky.start, rect.right-sky.left)
-            
+
             if sky.left >= rect.left and sky.right <= rect.right:
                 # Skyline section fully under segment, account for wasted space
                 if self._waste_management and sky.top < rect.bottom:
@@ -194,13 +194,15 @@ class Skyline(PackingAlgorithm):
         """
         assert(width > 0 and height >0)
         if width > max(self.width, self.height) or\
-            height > max(self.height, self.width):
+                height > max(self.height, self.width):
             return None
 
         # If there is room in wasted space, FREE PACKING!!
-        if self._waste_management:
-            if self._waste.fitness(width, height) is not None:
-                return 0
+        if (
+            self._waste_management
+            and self._waste.fitness(width, height) is not None
+        ):
+            return 0
 
         # Get best fitness segment, for normal rectangle, and for
         # rotated rectangle if rotation is enabled.
@@ -255,13 +257,11 @@ class SkylineMwf(Skyline):
     rectangle.
     """
     def _rect_fitness(self, rect, left_index, right_index):
-        waste = 0
-        for seg in self._skyline[left_index:right_index+1]:
-            waste +=\
-                (min(rect.right, seg.right)-max(rect.left, seg.left)) *\
-                (rect.bottom-seg.top)
-
-        return waste
+        return sum(
+            (min(rect.right, seg.right) - max(rect.left, seg.left))
+            * (rect.bottom - seg.top)
+            for seg in self._skyline[left_index : right_index + 1]
+        )
 
     def _rect_fitnes2s(self, rect, left_index, right_index):
         waste = ((min(rect.right, seg.right)-max(rect.left, seg.left)) for seg in self._skyline[left_index:right_index+1])
@@ -273,12 +273,11 @@ class SkylineMwfl(Skyline):
     minimal.
     """ 
     def _rect_fitness(self, rect, left_index, right_index):
-        waste = 0
-        for seg in self._skyline[left_index:right_index+1]:
-            waste +=\
-                (min(rect.right, seg.right)-max(rect.left, seg.left)) *\
-                (rect.bottom-seg.top)
-
+        waste = sum(
+            (min(rect.right, seg.right) - max(rect.left, seg.left))
+            * (rect.bottom - seg.top)
+            for seg in self._skyline[left_index : right_index + 1]
+        )
         return waste*self.width*self.height+rect.top
 
 

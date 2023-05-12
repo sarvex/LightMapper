@@ -37,9 +37,9 @@ class TLM_Integrated_Denoise:
         for image in self.image_array:
 
             if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                print("Image...: " + image)
+                print(f"Image...: {image}")
 
-            img = bpy.data.images.load(self.image_output_destination + "/" + image)
+            img = bpy.data.images.load(f"{self.image_output_destination}/{image}")
 
             image_node = tree.nodes.new(type='CompositorNodeImage')
             image_node.image = img
@@ -67,7 +67,7 @@ class TLM_Integrated_Denoise:
             filename, file_extension = os.path.splitext(image)
             filename = filename[:-6]
 
-            bpy.context.scene.render.filepath = self.image_output_destination + "/" + filename + "_denoised" + file_extension
+            bpy.context.scene.render.filepath = f"{self.image_output_destination}/{filename}_denoised{file_extension}"
 
             denoised_image_path = self.image_output_destination
             bpy.context.scene.render.image_settings.file_format = "HDR"

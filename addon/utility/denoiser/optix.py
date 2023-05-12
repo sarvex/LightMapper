@@ -27,21 +27,13 @@ class TLM_Optix_Denoise:
             file = optixPath
             filename, file_extension = os.path.splitext(file)
 
-            if(file_extension == ".exe"):
-
-                #if file exists optixDenoise or denoise
-
-                pass
-
-            else:
-
+            if file_extension != ".exe":
                 #if file exists optixDenoise or denoise
 
                 self.optixProperties.tlm_optix_path = os.path.join(self.optixProperties.tlm_optix_path,"Denoiser.exe")
 
-        else:
-            if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                print("Please provide Optix path")
+        elif bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+            print("Please provide Optix path")
 
     def denoise(self):
 
@@ -53,17 +45,16 @@ class TLM_Optix_Denoise:
 
                 image_path = os.path.join(self.image_output_destination, image)
 
-                denoise_output_destination = image_path[:-10] + "_denoised.hdr"
+                denoise_output_destination = f"{image_path[:-10]}_denoised.hdr"
 
                 if platform.system() == 'Windows':
                     optixPath = bpy.path.abspath(self.optixProperties.tlm_optix_path)
                     pipePath = [optixPath, '-i', image_path, '-o', denoise_output_destination]
                 elif platform.system() == 'Darwin':
                     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                        print("Mac for Optix is still unsupported")    
-                else:
-                    if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                        print("Linux for Optix is still unsupported")
+                        print("Mac for Optix is still unsupported")
+                elif bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                    print("Linux for Optix is still unsupported")
 
                 if self.optixProperties.tlm_optix_verbose:
                     denoisePipe = subprocess.Popen(pipePath, shell=True)
@@ -71,9 +62,13 @@ class TLM_Optix_Denoise:
                     denoisePipe = subprocess.Popen(pipePath, stdout=subprocess.PIPE, stderr=None, shell=True)
 
                 denoisePipe.communicate()[0]
-                
+
                 image = bpy.data.images.load(image_path, check_existing=False)
-                bpy.data.images[image.name].filepath_raw = bpy.data.images[image.name].filepath_raw[:-4] + "_denoised.hdr"
+                bpy.data.images[
+                    image.name
+                ].filepath_raw = (
+                    f"{bpy.data.images[image.name].filepath_raw[:-4]}_denoised.hdr"
+                )
                 bpy.data.images[image.name].reload()
 
     def clean(self):

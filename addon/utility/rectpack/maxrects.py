@@ -25,10 +25,7 @@ class MaxRects(PackingAlgorithm):
             None: Rectangle couldn't be placed into max_rect
             integer, float: fitness value 
         """
-        if width <= max_rect.width and height <= max_rect.height:
-            return 0
-        else:
-            return None
+        return 0 if width <= max_rect.width and height <= max_rect.height else None
 
     def _select_position(self, w, h): 
         """

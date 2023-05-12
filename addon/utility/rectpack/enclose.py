@@ -51,7 +51,7 @@ class Enclose(object):
             max_height = sum(r[1] for r in self._rectangles)
             min_width = max(r[0] for r in self._rectangles)
             max_width = sum(sides)
-        
+
         if self._max_width and self._max_width < max_width:
             max_width = self._max_width
 
@@ -59,7 +59,7 @@ class Enclose(object):
             max_height = self._max_height
 
         assert(max_width>min_width)
- 
+
         # Generate initial container widths
         candidates = [max_width, min_width]
 
@@ -67,7 +67,7 @@ class Enclose(object):
         for s in reversed(sides):
             width += s
             candidates.append(width)
-        
+
         width = 0
         for s in sides:
             width += s
@@ -75,13 +75,12 @@ class Enclose(object):
 
         candidates.append(max_width)
         candidates.append(min_width)
-      
+
         # Remove duplicates and widths too big or small
         seen = set()
-        seen_add = seen.add
-        candidates = [x for x in candidates if not(x in seen or seen_add(x))] 
-        candidates = [x for x in candidates if not(x>max_width or x<min_width)]
-        
+        candidates = [x for x in candidates if x not in seen and not seen.add(x)]
+        candidates = [x for x in candidates if x <= max_width and x >= min_width]
+
         # Remove candidates too small to fit all the rectangles
         min_area = sum(r[0]*r[1] for r in self._rectangles)
         return [(c, max_height) for c in candidates if c*max_height>=min_area]

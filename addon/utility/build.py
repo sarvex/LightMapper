@@ -34,12 +34,15 @@ def prepare_build(self=0, background_mode=False, shutdown_after_build=False):
 
         scene = bpy.context.scene
 
-        if not "tlm_plus_mode" in bpy.app.driver_namespace or bpy.app.driver_namespace["tlm_plus_mode"] == 0:
+        if (
+            "tlm_plus_mode" not in bpy.app.driver_namespace
+            or bpy.app.driver_namespace["tlm_plus_mode"] == 0
+        ):
             filepath = bpy.data.filepath
             dirpath = os.path.join(os.path.dirname(bpy.data.filepath), scene.TLM_EngineProperties.tlm_lightmap_savedir)
             if os.path.isdir(dirpath):
                 for file in os.listdir(dirpath):
-                    os.remove(os.path.join(dirpath + "/" + file))
+                    os.remove(os.path.join(f"{dirpath}/{file}"))
             bpy.app.driver_namespace["tlm_plus_mode"] = 1
             print("Plus Mode")
 
@@ -47,12 +50,15 @@ def prepare_build(self=0, background_mode=False, shutdown_after_build=False):
 
         scene = bpy.context.scene
 
-        if not "tlm_plus_mode" in bpy.app.driver_namespace or bpy.app.driver_namespace["tlm_plus_mode"] == 0:
+        if (
+            "tlm_plus_mode" not in bpy.app.driver_namespace
+            or bpy.app.driver_namespace["tlm_plus_mode"] == 0
+        ):
             filepath = bpy.data.filepath
             dirpath = os.path.join(os.path.dirname(bpy.data.filepath), scene.TLM_EngineProperties.tlm_lightmap_savedir)
             if os.path.isdir(dirpath):
                 for file in os.listdir(dirpath):
-                    os.remove(os.path.join(dirpath + "/" + file))
+                    os.remove(os.path.join(f"{dirpath}/{file}"))
             bpy.app.driver_namespace["tlm_plus_mode"] = 1
             print("Plus Mode")
 
@@ -87,12 +93,11 @@ def prepare_build(self=0, background_mode=False, shutdown_after_build=False):
             setGui(0)
             return{'FINISHED'}
 
-        if opencv_check():
-            if sceneProperties.tlm_filtering_use:
-                print("Error:Filtering - OpenCV not installed")
-                self.report({'INFO'}, "Error:Filtering - OpenCV not installed")
-                setGui(0)
-                return{'FINISHED'}
+        if opencv_check() and sceneProperties.tlm_filtering_use:
+            print("Error:Filtering - OpenCV not installed")
+            self.report({'INFO'}, "Error:Filtering - OpenCV not installed")
+            setGui(0)
+            return{'FINISHED'}
 
         setMode()
 
@@ -104,15 +109,12 @@ def prepare_build(self=0, background_mode=False, shutdown_after_build=False):
         naming_check()
 
         if sceneProperties.tlm_lightmap_engine == "Cycles":
-
             prepare.init(self, previous_settings)
 
-        if sceneProperties.tlm_lightmap_engine == "LuxCoreRender":
-
+        elif sceneProperties.tlm_lightmap_engine == "LuxCoreRender":
             setup.init(self, previous_settings)
 
-        if sceneProperties.tlm_lightmap_engine == "OctaneRender":
-
+        elif sceneProperties.tlm_lightmap_engine == "OctaneRender":
             configure.init(self, previous_settings)
 
         begin_build()
@@ -146,11 +148,10 @@ def prepare_build(self=0, background_mode=False, shutdown_after_build=False):
             self.report({'INFO'}, "Error with material")
             return{'FINISHED'}
 
-        if opencv_check():
-            if sceneProperties.tlm_filtering_use:
-                print("Error:Filtering - OpenCV not installed")
-                self.report({'INFO'}, "Error:Filtering - OpenCV not installed")
-                return{'FINISHED'}
+        if opencv_check() and sceneProperties.tlm_filtering_use:
+            print("Error:Filtering - OpenCV not installed")
+            self.report({'INFO'}, "Error:Filtering - OpenCV not installed")
+            return{'FINISHED'}
 
         dirpath = os.path.join(os.path.dirname(bpy.data.filepath), bpy.context.scene.TLM_EngineProperties.tlm_lightmap_savedir)
         if not os.path.isdir(dirpath):

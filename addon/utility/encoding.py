@@ -9,7 +9,9 @@ def splitLogLuvAlphaAtlas(imageIn, outDir, quality):
 
 def splitLogLuvAlpha(imageIn, outDir, quality):
     
-    bpy.app.driver_namespace["logman"].append("Starting LogLuv split for: " + str(imageIn))
+    bpy.app.driver_namespace["logman"].append(
+        f"Starting LogLuv split for: {str(imageIn)}"
+    )
 
     cv2 = importlib.util.find_spec("cv2")
 
@@ -31,12 +33,14 @@ def splitLogLuvAlpha(imageIn, outDir, quality):
     image_name = os.path.basename(imageIn)[:-4]
     #os.path.join(outDir, image_name+"_XYZ.png")
 
-    cv2.imwrite(os.path.join(outDir, image_name+"_XYZ.png"), merged)
-    cv2.imwrite(os.path.join(outDir, image_name+"_W.png"), alpha)
+    cv2.imwrite(os.path.join(outDir, f"{image_name}_XYZ.png"), merged)
+    cv2.imwrite(os.path.join(outDir, f"{image_name}_W.png"), alpha)
 
 def encodeLogLuvGPU(image, outDir, quality):
 
-    bpy.app.driver_namespace["logman"].append("Starting LogLuv encode for: " + str(image.name))
+    bpy.app.driver_namespace["logman"].append(
+        f"Starting LogLuv encode for: {str(image.name)}"
+    )
 
     input_image = bpy.data.images[image.name]
     image_name = input_image.name
@@ -119,20 +123,20 @@ def encodeLogLuvGPU(image, outDir, quality):
         input_image.colorspace_settings.name = 'Linear'
 
     # Removing .exr or .hdr prefix
-    if image_name[-4:] == '.exr' or image_name[-4:] == '.hdr':
+    if image_name[-4:] in ['.exr', '.hdr']:
         image_name = image_name[:-4]
 
-    target_image = bpy.data.images.get(image_name + '_encoded')
+    target_image = bpy.data.images.get(f'{image_name}_encoded')
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-        print(image_name + '_encoded')
+        print(f'{image_name}_encoded')
     if not target_image:
         target_image = bpy.data.images.new(
-                name = image_name + '_encoded',
-                width = input_image.size[0],
-                height = input_image.size[1],
-                alpha = True,
-                float_buffer = False
-                )
+            name=f'{image_name}_encoded',
+            width=input_image.size[0],
+            height=input_image.size[1],
+            alpha=True,
+            float_buffer=False,
+        )
 
     shader = gpu.types.GPUShader(vertex_shader, fragment_shader)
     batch = batch_for_shader(
@@ -145,7 +149,7 @@ def encodeLogLuvGPU(image, outDir, quality):
 
     if image.gl_load():
         raise Exception()
-    
+
     with offscreen.bind():
         bgl.glActiveTexture(bgl.GL_TEXTURE0)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
@@ -153,20 +157,20 @@ def encodeLogLuvGPU(image, outDir, quality):
         shader.bind()
         shader.uniform_int("image", 0)
         batch.draw(shader)
-        
+
         buffer = bgl.Buffer(bgl.GL_BYTE, input_image.size[0] * input_image.size[1] * 4)
         bgl.glReadBuffer(bgl.GL_BACK)
         bgl.glReadPixels(0, 0, input_image.size[0], input_image.size[1], bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
 
     offscreen.free()
-    
+
     target_image.pixels = [v / 255 for v in buffer]
     input_image = target_image
-    
+
     #Save LogLuv
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
         print(input_image.name)
-    input_image.filepath_raw = outDir + "/" + input_image.name + ".png"
+    input_image.filepath_raw = f"{outDir}/{input_image.name}.png"
     #input_image.filepath_raw = outDir + "_encoded.png"
     input_image.file_format = "PNG"
     bpy.context.scene.render.image_settings.quality = quality
@@ -305,20 +309,20 @@ def encodeImageRGBDGPU(image, maxRange, outDir, quality):
         input_image.colorspace_settings.name = 'Linear'
 
     # Removing .exr or .hdr prefix
-    if image_name[-4:] == '.exr' or image_name[-4:] == '.hdr':
+    if image_name[-4:] in ['.exr', '.hdr']:
         image_name = image_name[:-4]
 
-    target_image = bpy.data.images.get(image_name + '_encoded')
+    target_image = bpy.data.images.get(f'{image_name}_encoded')
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-        print(image_name + '_encoded')
+        print(f'{image_name}_encoded')
     if not target_image:
         target_image = bpy.data.images.new(
-                name = image_name + '_encoded',
-                width = input_image.size[0],
-                height = input_image.size[1],
-                alpha = True,
-                float_buffer = False
-                )
+            name=f'{image_name}_encoded',
+            width=input_image.size[0],
+            height=input_image.size[1],
+            alpha=True,
+            float_buffer=False,
+        )
 
     shader = gpu.types.GPUShader(vertex_shader, fragment_shader)
     batch = batch_for_shader(
@@ -331,7 +335,7 @@ def encodeImageRGBDGPU(image, maxRange, outDir, quality):
 
     if image.gl_load():
         raise Exception()
-    
+
     with offscreen.bind():
         bgl.glActiveTexture(bgl.GL_TEXTURE0)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
@@ -339,20 +343,20 @@ def encodeImageRGBDGPU(image, maxRange, outDir, quality):
         shader.bind()
         shader.uniform_int("image", 0)
         batch.draw(shader)
-        
+
         buffer = bgl.Buffer(bgl.GL_BYTE, input_image.size[0] * input_image.size[1] * 4)
         bgl.glReadBuffer(bgl.GL_BACK)
         bgl.glReadPixels(0, 0, input_image.size[0], input_image.size[1], bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
 
     offscreen.free()
-    
+
     target_image.pixels = [v / 255 for v in buffer]
     input_image = target_image
-    
+
     #Save LogLuv
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
         print(input_image.name)
-    input_image.filepath_raw = outDir + "/" + input_image.name + ".png"
+    input_image.filepath_raw = f"{outDir}/{input_image.name}.png"
     #input_image.filepath_raw = outDir + "_encoded.png"
     input_image.file_format = "PNG"
     bpy.context.scene.render.image_settings.quality = quality
@@ -504,20 +508,20 @@ def encodeImageRGBMGPU(image, maxRange, outDir, quality):
         input_image.colorspace_settings.name = 'Linear'
 
     # Removing .exr or .hdr prefix
-    if image_name[-4:] == '.exr' or image_name[-4:] == '.hdr':
+    if image_name[-4:] in ['.exr', '.hdr']:
         image_name = image_name[:-4]
 
-    target_image = bpy.data.images.get(image_name + '_encoded')
+    target_image = bpy.data.images.get(f'{image_name}_encoded')
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-        print(image_name + '_encoded')
+        print(f'{image_name}_encoded')
     if not target_image:
         target_image = bpy.data.images.new(
-                name = image_name + '_encoded',
-                width = input_image.size[0],
-                height = input_image.size[1],
-                alpha = True,
-                float_buffer = False
-                )
+            name=f'{image_name}_encoded',
+            width=input_image.size[0],
+            height=input_image.size[1],
+            alpha=True,
+            float_buffer=False,
+        )
 
     shader = gpu.types.GPUShader(vertex_shader, fragment_shader)
     batch = batch_for_shader(
@@ -530,7 +534,7 @@ def encodeImageRGBMGPU(image, maxRange, outDir, quality):
 
     if image.gl_load():
         raise Exception()
-    
+
     with offscreen.bind():
         bgl.glActiveTexture(bgl.GL_TEXTURE0)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
@@ -538,20 +542,20 @@ def encodeImageRGBMGPU(image, maxRange, outDir, quality):
         shader.bind()
         shader.uniform_int("image", 0)
         batch.draw(shader)
-        
+
         buffer = bgl.Buffer(bgl.GL_BYTE, input_image.size[0] * input_image.size[1] * 4)
         bgl.glReadBuffer(bgl.GL_BACK)
         bgl.glReadPixels(0, 0, input_image.size[0], input_image.size[1], bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
 
     offscreen.free()
-    
+
     target_image.pixels = [v / 255 for v in buffer]
     input_image = target_image
-    
+
     #Save LogLuv
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
         print(input_image.name)
-    input_image.filepath_raw = outDir + "/" + input_image.name + ".png"
+    input_image.filepath_raw = f"{outDir}/{input_image.name}.png"
     #input_image.filepath_raw = outDir + "_encoded.png"
     input_image.file_format = "PNG"
     bpy.context.scene.render.image_settings.quality = quality
@@ -569,21 +573,21 @@ def encodeImageRGBMCPU(image, maxRange, outDir, quality):
         input_image.colorspace_settings.name = 'Linear'
 
     # Removing .exr or .hdr prefix
-    if image_name[-4:] == '.exr' or image_name[-4:] == '.hdr':
+    if image_name[-4:] in ['.exr', '.hdr']:
         image_name = image_name[:-4]
 
-    target_image = bpy.data.images.get(image_name + '_encoded')
+    target_image = bpy.data.images.get(f'{image_name}_encoded')
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-        print(image_name + '_encoded')
+        print(f'{image_name}_encoded')
     if not target_image:
         target_image = bpy.data.images.new(
-                name = image_name + '_encoded',
-                width = input_image.size[0],
-                height = input_image.size[1],
-                alpha = True,
-                float_buffer = False
-                )
-    
+            name=f'{image_name}_encoded',
+            width=input_image.size[0],
+            height=input_image.size[1],
+            alpha=True,
+            float_buffer=False,
+        )
+
     num_pixels = len(input_image.pixels)
     result_pixel = list(input_image.pixels)
 
@@ -594,14 +598,14 @@ def encodeImageRGBMCPU(image, maxRange, outDir, quality):
         result_pixel[i+3] = math.ceil(result_pixel[i+3] * 255.0) / 255.0
         for j in range(3):
             result_pixel[i+j] /= result_pixel[i+3]
-    
+
     target_image.pixels = result_pixel
     input_image = target_image
-    
+
     #Save RGBM
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
         print(input_image.name)
-    input_image.filepath_raw = outDir + "/" + input_image.name + ".png"
+    input_image.filepath_raw = f"{outDir}/{input_image.name}.png"
     input_image.file_format = "PNG"
     bpy.context.scene.render.image_settings.quality = quality
     input_image.save()
@@ -632,19 +636,19 @@ def encodeImageRGBDCPU(image, maxRange, outDir, quality):
         input_image.colorspace_settings.name = 'Linear'
 
     # Removing .exr or .hdr prefix
-    if image_name[-4:] == '.exr' or image_name[-4:] == '.hdr':
+    if image_name[-4:] in ['.exr', '.hdr']:
         image_name = image_name[:-4]
 
-    target_image = bpy.data.images.get(image_name + '_encoded')
+    target_image = bpy.data.images.get(f'{image_name}_encoded')
     if not target_image:
         target_image = bpy.data.images.new(
-                name = image_name + '_encoded',
-                width = input_image.size[0],
-                height = input_image.size[1],
-                alpha = True,
-                float_buffer = False
-                )
-    
+            name=f'{image_name}_encoded',
+            width=input_image.size[0],
+            height=input_image.size[1],
+            alpha=True,
+            float_buffer=False,
+        )
+
     num_pixels = len(input_image.pixels)
     result_pixel = list(input_image.pixels)
 
@@ -660,15 +664,15 @@ def encodeImageRGBDCPU(image, maxRange, outDir, quality):
         result_pixel[i+1] = math.pow(result_pixel[i+1] * D, 1/2.2)
         result_pixel[i+2] = math.pow(result_pixel[i+2] * D, 1/2.2)
         result_pixel[i+3] = D
-    
+
     target_image.pixels = result_pixel
-    
+
     input_image = target_image
 
     #Save RGBD
     if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
         print(input_image.name)
-    input_image.filepath_raw = outDir + "/" + input_image.name + ".png"
+    input_image.filepath_raw = f"{outDir}/{input_image.name}.png"
     input_image.file_format = "PNG"
     bpy.context.scene.render.image_settings.quality = quality
     input_image.save()

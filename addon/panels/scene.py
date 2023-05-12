@@ -304,12 +304,9 @@ class TLM_PT_Filtering(bpy.types.Panel):
                 if scene.TLM_SceneProperties.tlm_filtering_mode == "Gaussian":
                     row.prop(scene.TLM_SceneProperties, "tlm_filtering_gaussian_strength")
                     row = layout.row(align=True)
-                    row.prop(scene.TLM_SceneProperties, "tlm_filtering_iterations")
                 elif scene.TLM_SceneProperties.tlm_filtering_mode == "Box":
                     row.prop(scene.TLM_SceneProperties, "tlm_filtering_box_strength")
                     row = layout.row(align=True)
-                    row.prop(scene.TLM_SceneProperties, "tlm_filtering_iterations")
-
                 elif scene.TLM_SceneProperties.tlm_filtering_mode == "Bilateral":
                     row.prop(scene.TLM_SceneProperties, "tlm_filtering_bilateral_diameter")
                     row = layout.row(align=True)
@@ -317,11 +314,10 @@ class TLM_PT_Filtering(bpy.types.Panel):
                     row = layout.row(align=True)
                     row.prop(scene.TLM_SceneProperties, "tlm_filtering_bilateral_coordinate_deviation")
                     row = layout.row(align=True)
-                    row.prop(scene.TLM_SceneProperties, "tlm_filtering_iterations")
                 else:
                     row.prop(scene.TLM_SceneProperties, "tlm_filtering_median_kernel", expand=True)
                     row = layout.row(align=True)
-                    row.prop(scene.TLM_SceneProperties, "tlm_filtering_iterations")
+                row.prop(scene.TLM_SceneProperties, "tlm_filtering_iterations")
         else:
             row = layout.row(align=True)
             row.prop(scene.TLM_SceneProperties, "tlm_numpy_filtering_mode")
@@ -371,8 +367,6 @@ class TLM_PT_Encoding(bpy.types.Panel):
                     row.prop(sceneProperties, "tlm_encoding_range")
                     row = layout.row(align=True)
                     row.prop(sceneProperties, "tlm_decoder_setup")
-                if sceneProperties.tlm_encoding_mode_a == "RGBD":
-                    pass
                 if sceneProperties.tlm_encoding_mode_a == "HDR":
                     row = layout.row(align=True)
                     row.prop(sceneProperties, "tlm_format")
@@ -438,28 +432,25 @@ class TLM_PT_Utility(bpy.types.Panel):
                 row = layout.row()
                 row.prop(sceneProperties, "tlm_postpack_object")
                 row = layout.row()
-            
+
                 if sceneProperties.tlm_postpack_object and sceneProperties.tlm_mesh_lightmap_unwrap_mode != "AtlasGroupA":
 
                     if scene.TLM_PostAtlasListItem >= 0 and len(scene.TLM_PostAtlasList) > 0:
                         row = layout.row()
                         item = scene.TLM_PostAtlasList[scene.TLM_PostAtlasListItem]
                         row.prop_search(sceneProperties, "tlm_postatlas_pointer", scene, "TLM_PostAtlasList", text='Atlas Group')
-                        row = layout.row()
-
                     else:
                         row = layout.label(text="Add Atlas Groups from the scene lightmapping settings.")
-                        row = layout.row()
+                    row = layout.row()
 
                 row.prop(sceneProperties, "tlm_mesh_unwrap_margin")
                 row = layout.row()
                 row.prop(sceneProperties, "tlm_resolution_weight")
 
+                row = layout.row()
                 if sceneProperties.tlm_resolution_weight == "Single":
-                    row = layout.row()
                     row.prop(sceneProperties, "tlm_mesh_lightmap_resolution")
                 else:
-                    row = layout.row()
                     row.prop(sceneProperties, "tlm_resolution_min")
                     row = layout.row()
                     row.prop(sceneProperties, "tlm_resolution_max")
@@ -470,7 +461,7 @@ class TLM_PT_Utility(bpy.types.Panel):
             row.operator("tlm.select_lightmapped_objects")
             row = layout.row(align=True)
             row.operator("tlm.remove_uv_selection")
-        
+
         elif sceneProperties.tlm_utility_context == "EnvironmentProbes":
 
             row.label(text="Environment Probes")
@@ -510,9 +501,9 @@ class TLM_PT_Utility(bpy.types.Panel):
         elif sceneProperties.tlm_utility_context == "LoadLightmaps2":
 
             row.operator("tlm.load_lightmaps_runtime")
-        
+
         elif sceneProperties.tlm_utility_context == "MaterialAdjustment":
-        
+
             row = layout.row(align=True)
             row.prop(sceneProperties, "tlm_utility_set")
             row = layout.row(align=True)
@@ -600,11 +591,9 @@ class TLM_PT_Selection(bpy.types.Panel):
                     row = layout.row()
                     item = scene.TLM_PostAtlasList[scene.TLM_PostAtlasListItem]
                     row.prop_search(sceneProperties, "tlm_postatlas_pointer", scene, "TLM_PostAtlasList", text='Atlas Group')
-                    row = layout.row()
-
                 else:
                     row = layout.label(text="Add Atlas Groups from the scene lightmapping settings.")
-                    row = layout.row()
+                row = layout.row()
 
             if sceneProperties.tlm_mesh_lightmap_unwrap_mode != "AtlasGroupA":
                 row.prop(sceneProperties, "tlm_mesh_lightmap_resolution")
@@ -633,19 +622,13 @@ class TLM_PT_Additional(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         sceneProperties = scene.TLM_SceneProperties
-        atlasListItem = scene.TLM_AtlasListItem
         atlasList = scene.TLM_AtlasList
-        postatlasListItem = scene.TLM_PostAtlasListItem
-        postatlasList = scene.TLM_PostAtlasList
-
         row = layout.row()
         row.prop(sceneProperties, "tlm_atlas_mode", expand=True)
 
         if sceneProperties.tlm_atlas_mode == "Prepack":
 
-            rows = 2
-            if len(atlasList) > 1:
-                rows = 4
+            rows = 4 if len(atlasList) > 1 else 2
             row = layout.row()
             row.template_list("TLM_UL_AtlasList", "Atlas List", scene, "TLM_AtlasList", scene, "TLM_AtlasListItem", rows=rows)
             col = row.column(align=True)
@@ -653,6 +636,7 @@ class TLM_PT_Additional(bpy.types.Panel):
             col.operator("tlm_atlaslist.delete_item", icon='REMOVE', text="")
             col.menu("TLM_MT_AtlasListSpecials", icon='DOWNARROW_HLT', text="")
 
+            atlasListItem = scene.TLM_AtlasListItem
             if atlasListItem >= 0 and len(atlasList) > 0:
                 item = atlasList[atlasListItem]
                 layout.prop(item, "tlm_atlas_lightmap_unwrap_mode")
@@ -662,17 +646,20 @@ class TLM_PT_Additional(bpy.types.Panel):
                 amount = 0
 
                 for obj in bpy.context.scene.objects:
-                    if obj.TLM_ObjectProperties.tlm_mesh_lightmap_use:
-                        if obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "AtlasGroupA":
-                            if obj.TLM_ObjectProperties.tlm_atlas_pointer == item.name:
-                                amount = amount + 1
+                    if (
+                        obj.TLM_ObjectProperties.tlm_mesh_lightmap_use
+                        and obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode
+                        == "AtlasGroupA"
+                        and obj.TLM_ObjectProperties.tlm_atlas_pointer == item.name
+                    ):
+                        amount = amount + 1
 
-                layout.label(text="Objects: " + str(amount))
+                layout.label(text=f"Objects: {str(amount)}")
                 layout.prop(item, "tlm_atlas_merge_samemat")
 
-                # layout.prop(item, "tlm_use_uv_packer")
-                # layout.prop(item, "tlm_uv_packer_padding")
-                # layout.prop(item, "tlm_uv_packer_packing_engine")
+                        # layout.prop(item, "tlm_use_uv_packer")
+                        # layout.prop(item, "tlm_uv_packer_padding")
+                        # layout.prop(item, "tlm_uv_packer_packing_engine")
 
         else:
 
@@ -687,15 +674,16 @@ class TLM_PT_Additional(bpy.types.Panel):
 
             else:
 
-                rows = 2
-                if len(atlasList) > 1:
-                    rows = 4
+                rows = 4 if len(atlasList) > 1 else 2
                 row = layout.row()
                 row.template_list("TLM_UL_PostAtlasList", "PostList", scene, "TLM_PostAtlasList", scene, "TLM_PostAtlasListItem", rows=rows)
                 col = row.column(align=True)
                 col.operator("tlm_postatlaslist.new_item", icon='ADD', text="")
                 col.operator("tlm_postatlaslist.delete_item", icon='REMOVE', text="")
                 col.menu("TLM_MT_PostAtlasListSpecials", icon='DOWNARROW_HLT', text="")
+
+                postatlasListItem = scene.TLM_PostAtlasListItem
+                postatlasList = scene.TLM_PostAtlasList
 
                 if postatlasListItem >= 0 and len(postatlasList) > 0:
                     item = postatlasList[postatlasListItem]
@@ -708,12 +696,15 @@ class TLM_PT_Additional(bpy.types.Panel):
                     atlasSize = item.tlm_atlas_lightmap_resolution
 
                     for obj in bpy.context.scene.objects:
-                        if obj.TLM_ObjectProperties.tlm_mesh_lightmap_use:
-                            if obj.TLM_ObjectProperties.tlm_postpack_object:
-                                if obj.TLM_ObjectProperties.tlm_postatlas_pointer == item.name:
-                                    amount = amount + 1
-                                    
-                                    atlasUsedArea += int(obj.TLM_ObjectProperties.tlm_mesh_lightmap_resolution) ** 2
+                        if (
+                            obj.TLM_ObjectProperties.tlm_mesh_lightmap_use
+                            and obj.TLM_ObjectProperties.tlm_postpack_object
+                            and obj.TLM_ObjectProperties.tlm_postatlas_pointer
+                            == item.name
+                        ):
+                            amount = amount + 1
+
+                            atlasUsedArea += int(obj.TLM_ObjectProperties.tlm_mesh_lightmap_resolution) ** 2
 
                     row = layout.row()
                     row.prop(item, "tlm_atlas_repack_on_cleanup")
@@ -724,10 +715,10 @@ class TLM_PT_Additional(bpy.types.Panel):
                     if cv2:
                         row = layout.row()
                         row.prop(item, "tlm_atlas_dilation")
-                    layout.label(text="Objects: " + str(amount))
+                    layout.label(text=f"Objects: {str(amount)}")
 
                     utilized = atlasUsedArea / (int(atlasSize) ** 2)
-                    layout.label(text="Utilized: " + str(utilized * 100) + "%")
+                    layout.label(text=f"Utilized: {str(utilized * 100)}%")
 
-                    if (utilized * 100) > 100:
+                    if utilized > 1:
                         layout.label(text="Warning! Overflow not yet supported")

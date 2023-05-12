@@ -82,11 +82,10 @@ class BinFactory(object):
         return self._ref_bin._fits_surface(width, height)
 
     def new_bin(self):
-        if self._count > 0:
-            self._count -= 1
-            return self._create_bin()
-        else:
+        if self._count <= 0:
             return None
+        self._count -= 1
+        return self._create_bin()
 
     def __eq__(self, other):
         return self._width*self._height == other._width*other._height
@@ -95,7 +94,7 @@ class BinFactory(object):
         return self._width*self._height < other._width*other._height
 
     def __str__(self):
-        return "Bin: {} {} {}".format(self._width, self._height, self._count)
+        return f"Bin: {self._width} {self._height} {self._count}"
 
 
 
@@ -268,13 +267,11 @@ class PackerOnline(object):
 
     def rect_list(self):
         rectangles = []
-        bin_count = 0
-
-        for abin in self:
-            for rect in abin:
-                rectangles.append((bin_count, rect.x, rect.y, rect.width, rect.height, rect.rid))
-            bin_count += 1
-
+        for bin_count, abin in enumerate(self):
+            rectangles.extend(
+                (bin_count, rect.x, rect.y, rect.width, rect.height, rect.rid)
+                for rect in abin
+            )
         return rectangles
 
     def bin_list(self):
@@ -437,18 +434,14 @@ class PackerGlobal(Packer, PackerBNFMixin):
 
         for key, binfac in self._empty_bins.items():
 
-            # Only return the new bin if at least one of the remaining 
-            # rectangles fit inside.
-            a_rectangle_fits = False
-            for _, rect in remaining_rect.items():
-                if binfac.fits_inside(rect[0], rect[1]):
-                    a_rectangle_fits = True
-                    break
-
+            a_rectangle_fits = any(
+                binfac.fits_inside(rect[0], rect[1])
+                for _, rect in remaining_rect.items()
+            )
             if not a_rectangle_fits:
                 factories_to_delete.add(key)
                 continue
-           
+
             # Create bin and add to open_bins
             new_bin = binfac.new_bin()
             if new_bin is None:
@@ -458,7 +451,7 @@ class PackerGlobal(Packer, PackerBNFMixin):
             # If the factory was depleted mark for deletion
             if binfac.is_empty():
                 factories_to_delete.add(key)
-       
+
             break
 
         # Delete marked factories

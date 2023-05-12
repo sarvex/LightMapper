@@ -43,10 +43,7 @@ class PackingAlgorithm(object):
         if self.rot and (width > self.width or height > self.height):
             width, height = height, width
 
-        if width > self.width or height > self.height:
-            return False
-        else:
-            return True
+        return width <= self.width and height <= self.height
     
     def __getitem__(self, key):
         """
@@ -102,11 +99,7 @@ class PackingAlgorithm(object):
         Returns:
             List: Format [(x, y, width, height, rid), ...]
         """
-        rectangle_list = []
-        for r in self:
-            rectangle_list.append((r.x, r.y, r.width, r.height, r.rid))
-
-        return rectangle_list
+        return [(r.x, r.y, r.width, r.height, r.rid) for r in self]
 
     def validate_packing(self):
         """
@@ -119,8 +112,8 @@ class PackingAlgorithm(object):
             if not surface.contains(r):
                 raise Exception("Rectangle placed outside surface")
 
-        
-        rectangles = [r for r in self]
+
+        rectangles = list(self)
         if len(rectangles) <= 1:
             return
 

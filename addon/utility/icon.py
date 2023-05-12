@@ -13,13 +13,14 @@ def image(identifier):
     def icon(identifier):
         if identifier in icons:
             return icons[identifier]
-        return icons.load(identifier, os.path.join(directory, identifier + '.png'), 'IMAGE')
+        return icons.load(
+            identifier, os.path.join(directory, f'{identifier}.png'), 'IMAGE'
+        )
 
     if icons:
         return icon(identifier)
-    else:
-        create()
-        return icon(identifier)
+    create()
+    return icon(identifier)
 
 
 def create():

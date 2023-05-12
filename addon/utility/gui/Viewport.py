@@ -13,7 +13,7 @@ class ViewportDraw:
 
         bpy.ops.image.open(filepath=bakefile_path)
 
-        print("Self path: " + bakefile_path)
+        print(f"Self path: {bakefile_path}")
 
         for img in bpy.data.images:
             if img.filepath.endswith(image_name):
@@ -50,7 +50,7 @@ class ViewportDraw:
         font_id = 0
         blf.position(font_id, 15, 15, 0)
         blf.size(font_id, 20, 72)
-        blf.draw(font_id, "%s" % (self.text))
+        blf.draw(font_id, f"{self.text}")
 
     def draw_image_callback(self, context):
         

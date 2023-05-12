@@ -2,59 +2,61 @@ import bpy, os
 
 def apply_lightmaps():
     for obj in bpy.context.scene.objects:
-        if obj.type == 'MESH' and obj.name in bpy.context.view_layer.objects:
-            if obj.TLM_ObjectProperties.tlm_mesh_lightmap_use:
+        if (
+            obj.type == 'MESH'
+            and obj.name in bpy.context.view_layer.objects
+            and obj.TLM_ObjectProperties.tlm_mesh_lightmap_use
+        ):
+            hidden = False
 
-                hidden = False
+            if obj.hide_get():
+                hidden = True
+            if obj.hide_viewport:
+                hidden = True
+            if obj.hide_render:
+                hidden = True
 
-                if obj.hide_get():
-                    hidden = True
-                if obj.hide_viewport:
-                    hidden = True
-                if obj.hide_render:
-                    hidden = True
+            if not hidden:
 
-                if not hidden:
+                for slot in obj.material_slots:
+                    mat = slot.material
+                    node_tree = mat.node_tree
+                    nodes = mat.node_tree.nodes
 
-                    for slot in obj.material_slots:
-                        mat = slot.material
-                        node_tree = mat.node_tree
-                        nodes = mat.node_tree.nodes
+                    scene = bpy.context.scene
 
-                        scene = bpy.context.scene
-
-                        dirpath = os.path.join(os.path.dirname(bpy.data.filepath), scene.TLM_EngineProperties.tlm_lightmap_savedir)
+                    dirpath = os.path.join(os.path.dirname(bpy.data.filepath), scene.TLM_EngineProperties.tlm_lightmap_savedir)
 
                         #Find nodes
-                        for node in nodes:
-                            if node.name == "Baked Image":
+                    for node in nodes:
+                        if node.name == "Baked Image":
 
-                                if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                                    print("Finding node source for material: " + mat.name + " @ " + obj.name)
+                            if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                                print(f"Finding node source for material: {mat.name} @ {obj.name}")
+
+                            postfix = "_baked"
+
+                            if scene.TLM_SceneProperties.tlm_denoise_use:
+                                postfix = "_denoised"
+                            if scene.TLM_SceneProperties.tlm_filtering_use:
+                                postfix = "_filtered"
+
+                            if node.image:
+                                node.image.source = "FILE"
 
                                 extension = ".hdr"
 
-                                postfix = "_baked"
+                                if obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "AtlasGroupA":
+                                    print("Atlas object image")
+                                    image_name = obj.TLM_ObjectProperties.tlm_atlas_pointer + postfix + extension #TODO FIX EXTENSION
+                                elif obj.TLM_ObjectProperties.tlm_postpack_object:
+                                    print("Atlas object image (postpack)")
+                                    image_name = obj.TLM_ObjectProperties.tlm_postatlas_pointer + postfix + extension #TODO FIX EXTENSION
+                                else:
+                                    print("Baked object image")
+                                    image_name = obj.name + postfix + extension #TODO FIX EXTENSION
 
-                                if scene.TLM_SceneProperties.tlm_denoise_use:
-                                    postfix = "_denoised"
-                                if scene.TLM_SceneProperties.tlm_filtering_use:
-                                    postfix = "_filtered"
-
-                                if node.image:
-                                    node.image.source = "FILE"
-
-                                    if obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "AtlasGroupA":
-                                        print("Atlas object image")
-                                        image_name = obj.TLM_ObjectProperties.tlm_atlas_pointer + postfix + extension #TODO FIX EXTENSION
-                                    elif obj.TLM_ObjectProperties.tlm_postpack_object:
-                                        print("Atlas object image (postpack)")
-                                        image_name = obj.TLM_ObjectProperties.tlm_postatlas_pointer + postfix + extension #TODO FIX EXTENSION
-                                    else:
-                                        print("Baked object image")
-                                        image_name = obj.name + postfix + extension #TODO FIX EXTENSION
-                                    
-                                    node.image.filepath_raw = os.path.join(dirpath, image_name)
+                                node.image.filepath_raw = os.path.join(dirpath, image_name)
 
 def apply_materials(load_atlas=0):
 

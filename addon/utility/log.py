@@ -10,7 +10,7 @@ class TLM_Logman:
         self.append("Logger started.")
 
     def append(self, appended):
-        self._log.append(str(datetime.datetime.now()) + ": " + str(appended))
+        self._log.append(f"{str(datetime.datetime.now())}: {str(appended)}")
 
     #TODO!
     def stats():

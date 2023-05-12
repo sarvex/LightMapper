@@ -14,7 +14,7 @@ class Point(object):
         return (self.x == other.x and self.y == other.y)
 
     def __repr__(self):
-        return "P({}, {})".format(self.x, self.y)
+        return f"P({self.x}, {self.y})"
 
     def distance(self, point):
         """
@@ -46,7 +46,7 @@ class Segment(object):
         return self.start==other.start and self.end==other.end
 
     def __repr__(self):
-        return "S({}, {})".format(self.start, self.end)
+        return f"S({self.start}, {self.end})"
     
     @property
     def length_squared(self):
@@ -215,7 +215,7 @@ class Rectangle(object):
         yield self.corner_bot_l
 
     def __repr__(self):
-        return "R({}, {}, {}, {})".format(self.x, self.y, self.width, self.height)
+        return f"R({self.x}, {self.y}, {self.width}, {self.height})"
 
     def area(self):
         """
@@ -264,12 +264,11 @@ class Rectangle(object):
         """
         if edges:
             if (self.bottom > rect.top or self.top < rect.bottom or\
-                self.left > rect.right or self.right < rect.left):
+                    self.left > rect.right or self.right < rect.left):
                 return False
-        else:
-            if (self.bottom >= rect.top or self.top <= rect.bottom or
+        elif (self.bottom >= rect.top or self.top <= rect.bottom or
                 self.left >= rect.right or self.right <= rect.left):
-                return False
+            return False
 
         return True
 

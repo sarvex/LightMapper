@@ -28,9 +28,8 @@ def configure_meshes(self):
             bpy.data.materials.remove(mat)
 
     for mat in bpy.data.materials:
-        if mat.name.startswith("."):
-            if "_Original" in mat.name:
-                bpy.data.materials.remove(mat)
+        if mat.name.startswith(".") and "_Original" in mat.name:
+            bpy.data.materials.remove(mat)
 
     for image in bpy.data.images:
         if image.name.endswith("_baked"):
@@ -42,93 +41,94 @@ def configure_meshes(self):
     scene = bpy.context.scene
 
     for obj in scene.objects:
-        if obj.type == "MESH":
-            if obj.TLM_ObjectProperties.tlm_mesh_lightmap_use:
-                obj.hide_select = False #Remember to toggle this back
+        if (
+            obj.type == "MESH"
+            and obj.TLM_ObjectProperties.tlm_mesh_lightmap_use
+        ):
+            obj.hide_select = False #Remember to toggle this back
 
-                currentIterNum = currentIterNum + 1
+            currentIterNum = currentIterNum + 1
 
-                obj.octane.baking_group_id = 1 + currentIterNum #0 doesn't exist, 1 is neutral and 2 is first baked object
+            obj.octane.baking_group_id = 1 + currentIterNum #0 doesn't exist, 1 is neutral and 2 is first baked object
 
-                print("Obj: " + obj.name + " set to baking group: " + str(obj.octane.baking_group_id))
+            print(
+                f"Obj: {obj.name} set to baking group: {str(obj.octane.baking_group_id)}"
+            )
 
-                for slot in obj.material_slots:
-                    if "." + slot.name + '_Original' in bpy.data.materials:
-                        if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                            print("The material: " + slot.name + " shifted to " + "." + slot.name + '_Original')
-                        slot.material = bpy.data.materials["." + slot.name + '_Original']
+            for slot in obj.material_slots:
+                if f".{slot.name}_Original" in bpy.data.materials:
+                    if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                        print(f"The material: {slot.name} shifted to .{slot.name}_Original")
+                    slot.material = bpy.data.materials[f".{slot.name}_Original"]
 
-                
-                objWasHidden = False
 
-                #For some reason, a Blender bug might prevent invisible objects from being smart projected
-                #We will turn the object temporarily visible
-                obj.hide_viewport = False
-                obj.hide_set(False)
+            objWasHidden = False
 
-                #Configure selection
-                bpy.ops.object.select_all(action='DESELECT')
-                bpy.context.view_layer.objects.active = obj
-                obj.select_set(True)
-                obs = bpy.context.view_layer.objects
-                active = obs.active
+            #For some reason, a Blender bug might prevent invisible objects from being smart projected
+            #We will turn the object temporarily visible
+            obj.hide_viewport = False
+            obj.hide_set(False)
 
-                uv_layers = obj.data.uv_layers
-                if not obj.TLM_ObjectProperties.tlm_use_default_channel:
-                    uv_channel = obj.TLM_ObjectProperties.tlm_uv_channel
-                else:
-                    uv_channel = "UVMap_Lightmap"
+            #Configure selection
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            obs = bpy.context.view_layer.objects
+            active = obs.active
 
-                    if not uv_channel in uv_layers:
-                        if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                            print("UV map created for obj: " + obj.name)
-                        uvmap = uv_layers.new(name=uv_channel)
-                        uv_layers.active_index = len(uv_layers) - 1
-                        print("Setting active UV to: " + uv_layers.active_index)
+            uv_layers = obj.data.uv_layers
+            if not obj.TLM_ObjectProperties.tlm_use_default_channel:
+                uv_channel = obj.TLM_ObjectProperties.tlm_uv_channel
+            else:
+                uv_channel = "UVMap_Lightmap"
+
+                if uv_channel not in uv_layers:
+                    if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                        print(f"UV map created for obj: {obj.name}")
+                    uvmap = uv_layers.new(name=uv_channel)
+                    uv_layers.active_index = len(uv_layers) - 1
+                    print(f"Setting active UV to: {uv_layers.active_index}")
 
                         #If lightmap
-                        if obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "Lightmap":
-                            bpy.ops.uv.lightmap_pack('EXEC_SCREEN', PREF_CONTEXT='ALL_FACES', PREF_MARGIN_DIV=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin)
-                        
-                        #If smart project
-                        elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "SmartProject":
+                    if obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "Lightmap":
+                        bpy.ops.uv.lightmap_pack('EXEC_SCREEN', PREF_CONTEXT='ALL_FACES', PREF_MARGIN_DIV=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin)
 
-                            if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                                print("Smart Project B")
-                            bpy.ops.object.select_all(action='DESELECT')
-                            obj.select_set(True)
-                            bpy.ops.object.mode_set(mode='EDIT')
-                            bpy.ops.mesh.select_all(action='SELECT')
-                            #API changes in 2.91 causes errors:
-                            if (2, 91, 0) > bpy.app.version:
-                                bpy.ops.uv.smart_project(angle_limit=45.0, island_margin=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin, user_area_weight=1.0, use_aspect=True, stretch_to_bounds=False)
-                            else:
-                                angle = math.radians(45.0)
-                                bpy.ops.uv.smart_project(angle_limit=angle, island_margin=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin, area_weight=1.0, correct_aspect=True, scale_to_bounds=False)
-                            bpy.ops.mesh.select_all(action='DESELECT')
-                            bpy.ops.object.mode_set(mode='OBJECT')
-                        
-                        elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "Xatlas":
-                            
-                            Unwrap_Lightmap_Group_Xatlas_2_headless_call(obj)
+                    elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "SmartProject":
 
-                        elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "AtlasGroupA":
-
-                            if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                                print("ATLAS GROUP: " + obj.TLM_ObjectProperties.tlm_atlas_pointer)
-                            
-                        else: #if copy existing
-
-                            if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                                print("Copied Existing UV Map for object: " + obj.name)
-
-                    else:
                         if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
-                            print("Existing UV map found for obj: " + obj.name)
-                        for i in range(0, len(uv_layers)):
-                            if uv_layers[i].name == uv_channel:
-                                uv_layers.active_index = i
-                                break
+                            print("Smart Project B")
+                        bpy.ops.object.select_all(action='DESELECT')
+                        obj.select_set(True)
+                        bpy.ops.object.mode_set(mode='EDIT')
+                        bpy.ops.mesh.select_all(action='SELECT')
+                        #API changes in 2.91 causes errors:
+                        if (2, 91, 0) > bpy.app.version:
+                            bpy.ops.uv.smart_project(angle_limit=45.0, island_margin=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin, user_area_weight=1.0, use_aspect=True, stretch_to_bounds=False)
+                        else:
+                            angle = math.radians(45.0)
+                            bpy.ops.uv.smart_project(angle_limit=angle, island_margin=obj.TLM_ObjectProperties.tlm_mesh_unwrap_margin, area_weight=1.0, correct_aspect=True, scale_to_bounds=False)
+                        bpy.ops.mesh.select_all(action='DESELECT')
+                        bpy.ops.object.mode_set(mode='OBJECT')
+
+                    elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "Xatlas":
+
+                        Unwrap_Lightmap_Group_Xatlas_2_headless_call(obj)
+
+                    elif obj.TLM_ObjectProperties.tlm_mesh_lightmap_unwrap_mode == "AtlasGroupA":
+
+                        if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                            print(f"ATLAS GROUP: {obj.TLM_ObjectProperties.tlm_atlas_pointer}")
+
+                    elif bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                        print(f"Copied Existing UV Map for object: {obj.name}")
+
+                else:
+                    if bpy.context.scene.TLM_SceneProperties.tlm_verbose:
+                        print(f"Existing UV map found for obj: {obj.name}")
+                    for i in range(0, len(uv_layers)):
+                        if uv_layers[i].name == uv_channel:
+                            uv_layers.active_index = i
+                            break
 
     set_camera()
 
@@ -136,7 +136,7 @@ def set_camera():
 
     cam_name = "TLM-BakeCam"
 
-    if not cam_name in bpy.context.scene:
+    if cam_name not in bpy.context.scene:
         camera = bpy.data.cameras.new(cam_name)
         camobj_name = "TLM-BakeCam-obj"
         cam_obj = bpy.data.objects.new(camobj_name, camera)
@@ -160,7 +160,7 @@ def set_settings():
     else:
         scene.render.tile_x = 32
         scene.render.tile_y = 32
-    
+
     if engineProperties.tlm_quality == "0":
         cycles.samples = 32
         cycles.max_bounces = 1
@@ -211,20 +211,13 @@ def set_settings():
         cycles.volume_bounces = 512
         cycles.caustics_reflective = True
         cycles.caustics_refractive = True
-    else: #Custom
-        pass
 
 def store_existing(prev_container):
 
     scene = bpy.context.scene
     cycles = scene.cycles
 
-    selected = []
-
-    for obj in bpy.context.scene.objects:
-        if obj.select_get():
-            selected.append(obj.name)
-
+    selected = [obj.name for obj in bpy.context.scene.objects if obj.select_get()]
     prev_container["settings"] = [
         cycles.samples,
         cycles.max_bounces,
